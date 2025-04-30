@@ -1,9 +1,16 @@
 cmake_minimum_required(VERSION 3.13.3)
 # 项目信息
-project (jelog LANGUAGES C CXX VERSION 0.0.1)
+project (jelog C CXX)
 # 指定cpp版本
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED true)
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(CMAKE_INSTALL_PREFIX ${PROJECT_BINARY_DIR})
+
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
@@ -12,50 +19,70 @@ endif()
 
 add_library(${PROJECT_NAME} STATIC log.cpp)
 
-# 如果直接设置当前路径会被认为是绝对路径，故看起来只能这样设置
-target_include_directories(${PROJECT_NAME} INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/.> $<INSTALL_INTERFACE:include>)
+# target_include_directories(${PROJECT_NAME} PUBLIC
+#                            "${PROJECT_SOURCE_DIR}"
+#                            )
 
-# 用于安装指定的目标（如库或可执行文件）
-# install(TARGETS jelog
-#     EXPORT jelog
-#     # 可执行文件的安装路径
-#     # RUNTIME DESTINATION lib
-#     # 共享库的安装路径
-#     # LIBRARY DESTINATION lib
-#     # 静态库的安装路径
-#     ARCHIVE DESTINATION .
-# )
+install(FILES "${PROJECT_SOURCE_DIR}/log.h"
+  DESTINATION include/
+  )
 
-# 用于安装导出目标的配置文件，使得其他项目可以通过 find_package 找到这个库
-# install(
-#     # 与上面 install(TARGETS 的 EXPORT 名称一致
-#     EXPORT jelog 
-#     # 要生成的 CMake 配置文件的名称
-#     FILE jelogConfig.cmake
-#     # 为导出的目标指定一个命名空间
-#     # NAMESPACE je::
-#     # 指定安装路径
-#     DESTINATION .
-# )
+# export
+install(TARGETS ${PROJECT_NAME} 
+  EXPORT ${PROJECT_NAME}Targets
+  DESTINATION lib)
 
-# 用于安装整个目录及其内容，通常用于安装头文件或资源文件
-# install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/
-#     DESTINATION include
-#     FILES_MATCHING PATTERN "log.h"
-# )
+# 安装
+install(EXPORT ${PROJECT_NAME}Targets
+  FILE ${PROJECT_NAME}Targets.cmake
+  DESTINATION lib/cmake/${PROJECT_NAME}
+)
 
-# export(EXPORT ${PROJECT_NAME} NAMESPACE je::)
+target_include_directories(${PROJECT_NAME}
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
 
-# 用于安装单个文件
-# install(FILES <files>
-#     DESTINATION <path>
-# )
+# 使其在构建和安装目录中使用不同路径
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/Config.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+  INSTALL_DESTINATION "lib/cmake/${PROJECT_NAME}"
+  NO_SET_AND_CHECK_MACRO
+  NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+  VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}"
+  COMPATIBILITY AnyNewerVersion
+)
+
+# 将生成的配置和版本安装到适当位置
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+  DESTINATION lib/cmake/${PROJECT_NAME}
+)
+
+# 生成${PROJECT_NAME}Targets.cmake
+export(EXPORT ${PROJECT_NAME}Targets
+  FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake"
+)
 
 # 测试选项
 if(BUILD_TESTING) 
-    enable_testing()
     aux_source_directory(test/ TEST_DIR)  
-    add_executable(log_test log.cpp ${TEST_DIR})  
-    target_link_libraries(log_test PRIVATE jelog)
+    add_executable(log_test log.cpp ${TEST_DIR})
+
+    # install后可这样使用
+    # SET(CMAKE_PREFIX_PATH ${PROJECT_BINARY_DIR})
+    # find_package(${PROJECT_NAME} REQUIRED)
+    # target_link_libraries(log_test PRIVATE ${PROJECT_NAME})
+    # 不install时
+    # target_link_libraries(log_test PRIVATE ${PROJECT_BINARY_DIR}/lib/${PROJECT_NAME})
+
+    # include(CTest)
+    enable_testing()
     add_test(NAME LogTest COMMAND log_test)
 endif()

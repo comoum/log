@@ -1,5 +1,21 @@
 # Usage
 
+1. 编译安装
+```shell
+cmake -G "MinGW Makefiles" ..  
+cmake --build . --config Release  
+cmake --install . --config Release  
+```
+
+2. 引入cmake
+```cmake
+SET(CMAKE_PREFIX_PATH 此库路径的build文件夹下)
+find_package(jelog REQUIRED)
+target_link_libraries([target] PRIVATE jelog)
+```
+
+3. 使用
+
 ```cpp
 #include "log.h"
 
