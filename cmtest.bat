@@ -8,14 +8,14 @@ if not exist %BUILD_DIR% (
 
 cd %BUILD_DIR%
 @REM cmake -G "MinGW Makefiles" -DBUILD_TESTING=ON -DCMAKE_FIND_DEBUG_MODE=TRUE .. 
-cmake -G "MinGW Makefiles" -DBUILD_TESTING=ON .. 
+cmake -G "MinGW Makefiles" -DBUILD_TESTING=ON -DCMAKE_INSTALL_PREFIX=. .. 
 if %ERRORLEVEL% neq 0 (
     @echo cmake failed
     cd ..
     exit /b
 )
 
-cmake --build . --config Release --target test
+cmake --build . --config Release
 if %ERRORLEVEL% neq 0 (
     @echo build failed
     cd ..
