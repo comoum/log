@@ -3,6 +3,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
 #include <chrono>
+#include <cstring>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -129,7 +130,7 @@ void Log::log_print(const char* file, int line, const char* function, const char
     log.__ofs_.flush();
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #define PARAM_ERR_FUNCTION __FUNCSIG__
 #else
 #define PARAM_ERR_FUNCTION __PRETTY_FUNCTION__
