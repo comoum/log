@@ -1,0 +1,2 @@
+# 将所有 .h 文件强制识别为 C++
+*.h linguist-language=C++
